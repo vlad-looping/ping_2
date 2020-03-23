@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+
+
+@font-face {
+  font-family: Posterama;
+  src: url('Monotype  - Posterama Text.otf');
+}
+
+#box1 {
+  width: 960px;
+  margin-left: 40px;
+}
+
+</style>
+
+<body>
+  <div id = "box1">
+  </div>
+</body>
+
+<script src="https://d3js.org/d3.v5.min.js"></script>
+<script>
+
+var element_width = d3.select("#box1").node().getBoundingClientRect().width
+
+height = 600;
+width = element_width;
+margin = ({top: 120, right: 0, bottom: 50, left: 0});
+
+
+data = [
+  {year: 2017, "Programmatic" : 0.73, "Non-Programmatic": 0.27},
+  {year: 2018, "Programmatic" : 0.74, "Non-Programmatic": 0.26},
+  {year: 2019, "Programmatic" : 0.75, "Non-Programmatic": 0.25},
+  {year: 2020, "Programmatic" : 0.76, "Non-Programmatic": 0.24},
+  {year: 2021, "Programmatic" : 0.76, "Non-Programmatic": 0.24},
+  {year: 2022, "Programmatic" : 0.77, "Non-Programmatic": 0.23},
+  {year: 2023, "Programmatic" : 0.77, "Non-Programmatic": 0.23}
+  ]
+
+  stack = d3.stack()
+        .keys( ["Programmatic", "Non-Programmatic"] )
+
+  chartData = stack( data )
+
+
+colors = d3.scaleOrdinal()
+  .domain(chartData.map(d => d.key))
+  //.domain(["Programmatic", "Non-Programmatic"])
+  .range(["#81131f", "#c9c9c9"])
+
+  xScale = d3.scaleBand(
+    data.map(d => d.year),
+    [ margin.left, width - margin.right ]
+  ).padding(0.2)
+
+
+yScale = d3.scaleLinear(
+  [ 0, 1 ],
+  [ height - margin.bottom, margin.top ]
+)
+
+xAxis = d3.axisBottom(xScale)
+    .tickSizeOuter(0)
+
+
+
+
+var svg = d3.select("#box1").append("svg")
+    .attr("width", width)
+    .attr("height", height)
+
+    groups = svg.append('g')
+        // Each layer of the stack goes in a group
+        // the group contains that layer for all countries
+        .selectAll('g')
+        .data( chartData )
+        .join('g')
+          // rects in the same layer will all have the same color, so we can put it on the group
+          // we can use the key on the layer's array to set the color
+          .style('fill', (d,i) => colors(d.key))
+
+      groups.selectAll('rect')
+        // Now we place the rects, which are the children of the layer array
+        .data(d => d)
+        .join('rect')
+          .attr('x', d => xScale(d.data.year))
+          .attr('y', d => yScale(0))
+          .attr('height', 0)
+          .attr('width', xScale.bandwidth())
+
+       groups.selectAll('rect')
+        // Now we place the rects, which are the children of the layer array
+          .transition()
+          .duration(2000)
+          .ease(d3.easeCubicOut)
+          .attr('y', d => yScale(d[1]))
+          .attr('height', d => yScale(d[0]) - yScale(d[1]))
+
+      groups.selectAll('text')
+          .data(d => d)
+          .join('text')
+          .attr("x", function(d) { return (xScale(d.data.year)+ xScale.bandwidth()/2 - 20);})
+          .attr("y", function(d) { return  yScale(d[1]) + 50;})
+          .style('font-family', 'Posterama')
+          .style('font-size' , 24)
+          .style('fill', 'transparent')
+          .transition()
+          .delay(2000)
+          .ease(d3.easeCubicOut)
+          .text(function(d) { return d3.format(".2f")(d[1] - d[0])*100+"%" ;  })
+          .style('fill', 'white')
+
+
+
+
+       svg.selectAll("years")
+          .data(data)
+          .enter()
+          .append("text")
+          .attr("x", function(d) { return (xScale(d.year) + xScale.bandwidth()/2 - 35);})
+          .attr("y", function(d) { return height - 10; })
+          .text(function(d) { return d.year; })
+          .style('font-family', 'Posterama')
+          .style('font-size' , 32)
+
+          keyz = ["Programmatic", "Non-Programmatic"]
+
+                    svg.selectAll("mydots")
+                    .data(keyz)
+                    .enter()
+                    .append("circle")
+                      .attr("cx", 35)
+                      .attr("cy", function(d,i){ return 20 + i*25}) // 100 is where the first dot appears. 25 is the distance between dots
+                      .attr("r", 7)
+                      .style("fill", function(d){ return colors(d)})
+
+                  // Add one dot in the legend for each name.
+                  svg.selectAll("mylabels")
+                    .data(keyz)
+                    .enter()
+                    .append("text")
+                      .attr("x", 55)
+                      .attr("y", function(d,i){ return 20 + i*25}) // 100 is where the first dot appears. 25 is the distance between dots
+                      .style("fill", function(d){ return colors(d)})
+                      .text(function(d){ return d})
+                      .attr("text-anchor", "left")
+                      .style('font-family', 'Posterama')
+                      .style("alignment-baseline", "middle")
+
+
+
+</script>
